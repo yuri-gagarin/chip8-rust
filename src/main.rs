@@ -12,8 +12,6 @@ fn main() {
     let mut data = Vec::<u8>::new();
     file.read_to_end(&mut data).expect("DATA READ ERROR");
 
-    print!("DATA IS {:?}", data);
-
     // load //
     let mut chip8 = Chip8::new();
     chip8.load_rom(&data);
