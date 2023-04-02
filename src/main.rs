@@ -2,7 +2,9 @@ use std::{fs::File, io::Read};
 
 mod ram;
 mod chip8;
+mod display;
 mod emulator;
+mod keyboard;
 
 use chip8::{Chip8};
 
