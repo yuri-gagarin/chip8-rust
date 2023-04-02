@@ -1,8 +1,9 @@
-use super::ram::Ram;
+use super::ram::{Ram};
 
 pub struct Chip8 {
     ram: Ram,
 }
+
 
 impl Chip8 {
     pub fn new() -> Chip8 {

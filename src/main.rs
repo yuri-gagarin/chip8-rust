@@ -2,6 +2,7 @@ use std::{fs::File, io::Read};
 
 mod ram;
 mod chip8;
+mod emulator;
 
 use chip8::{Chip8};
 
