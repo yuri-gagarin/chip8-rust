@@ -2,6 +2,7 @@ use std::{fs::File, io::Read};
 
 mod ram;
 mod chip8;
+mod cpu;
 mod display;
 mod emulator;
 mod keyboard;
@@ -17,5 +18,10 @@ fn main() {
     // load //
     let mut chip8 = Chip8::new();
     chip8.load_rom(&data);
+
+    loop {
+        //
+        chip8.run_instruction();
+    }
 
 }
