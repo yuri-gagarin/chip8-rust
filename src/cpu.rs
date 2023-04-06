@@ -18,12 +18,22 @@ impl CPU {
     pub fn run_instruction(&mut self, ram: &mut Ram) {
         let lo = ram.read_byte(self.pc) as u16;
         let hi = ram.read_byte(self.pc + 1) as u16;
-        let current_instruction: u16 = (lo << 8) as u16 | hi as u16;
+        let current_instruction: u16 = (hi << 8) | lo;
         println!("Instruction - {:#X} - read: LO - {:#X}. HI - {:#X}", current_instruction, lo, hi);
+        /* 
         if hi == 0 && lo == 0 {
             panic!();
         }
+        */
+        let nnn: u16 = current_instruction & 0x0FFF; // NNN address //
+        let nn: u16 = current_instruction & 0x0FF;   // NN 8 bit constant //
+        let n: u16 = current_instruction & 0x00F;    // N 4 bit constant // 
+        let x: u16 = current_instruction & 0x0F00 >> 8; //
+        let y: u16 = current_instruction & 0x00F0 >> 4;
+        /* 
+        match current_instruction && 
         self.pc += 2;
+        */
     }
 }
 

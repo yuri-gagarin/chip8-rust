@@ -18,4 +18,7 @@ impl Display {
     pub fn draw_byte(&mut self, byte: u8, x: u8, y: u8) {
         
     }
+    pub fn clear_screen(&mut self) {
+
+    }
 }

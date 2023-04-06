@@ -1,6 +1,7 @@
 use std::{fs::File, io::Read};
 
 mod ram;
+mod bus;
 mod chip8;
 mod cpu;
 mod display;
