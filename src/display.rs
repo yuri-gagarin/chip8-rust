@@ -21,4 +21,7 @@ impl Display {
     pub fn clear_screen(&mut self) {
 
     }
+    pub fn get_display_buffer(&mut self) {
+
+    } 
 }

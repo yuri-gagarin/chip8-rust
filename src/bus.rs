@@ -46,6 +46,29 @@ impl Bus {
         self.delay_timer = value;
     }
     pub fn get_delay_timer(&self) -> u8 {
-        let diff = std::time::Instant::now();
+        let diff = std::time::Instant::now() - self.delay_timer_set_time;
+        let millisecons = diff.get_milliseconds();
+        let ticks = millisecons / 16;
+
+        if ticks >= self.delay_timer as u64 {
+            0
+        } else {
+            self.delay_timer - ticks as u8
+        }
+    }
+    pub fn get_display_buffer(&self) -> &[u8] {
+        self.display.get_display_buffer();
+    }
+    
+}
+
+trait Milliseconds {
+    fn get_milliseconds(&self) -> u64;
+}
+impl Milliseconds for std::time::Duration {
+    fn get_milliseconds(&self) -> u64 {
+        let nanoseconds: u64 = self.subsec_nanos() as u64;
+        let milliseconds: u64 = (1000 * 1000 * 1000 * self.as_secs() + nanoseconds)/(1000 * 1000);
+        milliseconds
     }
 }
