@@ -56,8 +56,8 @@ impl Bus {
             self.delay_timer - ticks as u8
         }
     }
-    pub fn get_display_buffer(&self) -> &[u8] {
-        self.display.get_display_buffer();
+    pub fn get_display_buffer(&mut self) -> &[u8] {
+        self.display.get_display_buffer()
     }
     
 }
