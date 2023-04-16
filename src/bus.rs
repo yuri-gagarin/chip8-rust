@@ -26,8 +26,8 @@ impl Bus {
     pub fn ram_write_byte(&mut self, address: u16, value: u8) {
         self.ram.write_byte(address, value);
     }
-    pub fn display_draw_byte(&mut self, byte: u8, x: u8, y: u8) {
-        self.display.draw_byte(byte, x, y);
+    pub fn display_draw_byte(&mut self, byte: u8, x: u8, y: u8) -> bool {
+        self.display.draw_byte(byte, x, y)
     }
     pub fn display_clear_screen(&mut self) {
         self.display.clear_screen();
