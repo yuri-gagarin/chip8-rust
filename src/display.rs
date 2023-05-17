@@ -2,6 +2,7 @@ const WIDTH: usize = 64;
 const HEIGHT: usize = 32;
 const SCREEN_PIXELS: usize = WIDTH * HEIGHT;
 
+
 pub struct Display {
     screen: [u8; SCREEN_PIXELS] // 2048 pixels in the screen ? //
 }
@@ -20,6 +21,8 @@ impl Display {
         let mut x_coordinate = x as usize;
         let mut y_coordinate = y as usize;
         let mut b = byte;
+        let number: i16 = -10;
+
 
         for _ in 0..8 {
             x_coordinate = WIDTH;
