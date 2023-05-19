@@ -56,13 +56,79 @@ impl CPU {
         let y: u8 = (current_instruction & 0x00F0 >> 4) as u8;  //
         
         match (current_instruction & 0xF000) >> 12 {
+            0x0 => {
+                match nn {
+                    0xE0 => {
+                        bus.display_clear_screen();
+                        self.pc += 2;
+                    }
+                    0xEE => {
+                        // get and return from subroutinge //
+                        let address: u16 = self.return_stack.pop().unwrap();
+                        self.pc = address;
+                    }
+                    _ => panic!(
+                        "Unrecognized 0x00** instruction {:#X}:{:#X}",
+                        self.pc,
+                        current_instruction
+                    ),
+                }
+            }
             0x1 => {
-                // goto NNN //
+                // Jump to location nnn //
+                //The interpreter sets the program counter to nnn //
                 self.pc = nnn;
             },
+            0x2 => {
+                // call a subroutine at NNN //
+                // The interpreter increments the stack pointer, then puts the current PC on the top of the stack. The PC is then set to nnn. //
+                self.return_stack.push(self.pc + 2);
+                self.pc = nnn;
+            }
+            0x3 => {
+                // Skip next instruction if Vx = nn //
+                // The interpreter compares register Vx to nn, and if they are equal, increments the program counter by 2 //
+                let vx = self.read_reg_vx(x);
+                if vx == nn {
+                    self.pc += 4;
+                } else {
+                    self.pc += 2;
+                }
+            }
+            0x4 => {
+                // Skip next instruction if Vx != nn //
+                // The interpreter compares register Vx to nn, and if they are not equal, increments the program counter by 2 //
+                let vx = self.read_reg_vx(x);
+                if vx != nn {
+                    self.pc += 4;
+                } else {
+                    self.pc += 2;
+                }
+            }
+            0x5 => {
+                // Skip next instruction if Vx = Vy //
+                // The interpreter compares register Vx to register Vy, and if they are equal, increments the program counter by 2. //
+                let vx = self.read_reg_vx(x);
+                let vy = self.read_reg_vx(y);
+                if vx == vy {
+                    self.pc += 4;
+                } else {
+                    self.pc += 2;
+                }
+            }
             0x6 => {
+                // Set Vx = nn //
+                // The interpreter puts the value nn into register Vx //
                 self.write_reg_vx(x, nn);
                 self.pc += 2;
+            }
+            0x7 => {
+                // Set Vx = Vx + nn //
+                // Adds the value nn to the value of register Vx, then stores the result in Vx //
+                let vx = self.read_reg_vx(x);
+                self.write_reg_vx(x, vx.wrapping_add(nn));
+                self.pc += 2;
+
             }
             0xD => {
                 self.debug_draw_sprite(bus, x, y, 100);
