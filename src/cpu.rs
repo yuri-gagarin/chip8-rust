@@ -130,6 +130,51 @@ impl CPU {
                 self.pc += 2;
 
             }
+            0x8 => {
+               
+                let vy = self.read_reg_vx(y);
+                let vx = self.read_reg_vx(x);
+                match n {
+                    0x0 => {
+                        // Set Vx = Vy //
+                        // Stores the value of register Vy in register Vx //
+                        self.write_reg_vx(x, vy);
+                    }
+                    0x2 => {
+                        // Set Vx = Vx AND Vy. //
+                        // Performs a bitwise AND on the values of Vx and Vy, then stores the result in Vx. A bitwise AND compares the corresponding bits from two values, and if both bits are 1, then the same bit in the result is also 1. Otherwise, it is 0.
+                        let res = vx & vy;
+                        self.write_reg_vx(x, res);
+                    }
+                    0x3 => {
+                        // Set Vx = Vx XOR Vy. //
+                        // Performs a bitwise exclusive OR on the values of Vx and Vy, then stores the result in Vx. An exclusive OR compares the corrseponding bits from two values, and if the bits are not both the same, then the corresponding bit in the result is set to 1. Otherwise, it is 0. //
+                        let res = vx ^ vy;
+                        self.write_reg_vx(x, res);
+
+                    }
+                    0x4 => {
+                        //  Set Vx = Vx + Vy, set VF = carry. //
+                        //  The values of Vx and Vy are added together. If the result is greater than 8 bits (i.e., > 255,) VF is set to 1, otherwise 0. Only the lowest 8 bits of the result are kept, and stored in Vx. //
+                        let res = vx + vy;
+                        self.write_reg_vx(x, res);
+                        if res > 0xFF {
+                            self.write_reg_vx(0xF, 1);
+                        }
+                    }
+                    0x5 => {
+                        //  Set Vx = Vx - Vy, set VF = NOT borrow. //
+                        //  If Vx > Vy, then VF is set to 1, otherwise 0. Then Vy is subtracted from Vx, and the results stored in Vx. //
+                        let result: i8 = (vx - vy) as i8;
+                        self.write_reg_vx(x, result);
+                        if result < 0 {
+                            self.write_reg_vx(0xF, 1);
+                        } else {
+                            self.write_reg_vx(0xF, 0);
+                        }
+                    }
+                }
+            }
             0xD => {
                 self.debug_draw_sprite(bus, x, y, 100);
             }
