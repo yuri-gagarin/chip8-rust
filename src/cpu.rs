@@ -1,5 +1,7 @@
 use std::fmt;
 use super::bus::Bus;
+use rand::{thread_rng, Rng};
+
 pub const PROGRAM_START: u16 = 0x200;
 const WRITE_ERROR_MSG: &str = "Write error in <fmt::Debug> for <CPU>";
 
@@ -165,15 +167,77 @@ impl CPU {
                     0x5 => {
                         //  Set Vx = Vx - Vy, set VF = NOT borrow. //
                         //  If Vx > Vy, then VF is set to 1, otherwise 0. Then Vy is subtracted from Vx, and the results stored in Vx. //
-                        let result: i8 = (vx - vy) as i8;
-                        self.write_reg_vx(x, result);
+                        let result: i8 = vx as i8 - vy as i8;
+                        if result < 0 {
+                            panic!("Unrecognized 0x8XY5 instruction {:#X} {:#X}. Expected positive u8 integer, got {:#X}:" , self.pc, current_instruction, result);
+                        }                        
+                        self.write_reg_vx(x, result as u8);
                         if result < 0 {
                             self.write_reg_vx(0xF, 1);
                         } else {
                             self.write_reg_vx(0xF, 0);
                         }
                     }
+                    0x6 => {
+                        //  Set Vx = Vx SHR 1. //
+                        //  If the least-significant bit of Vx is 1, then VF is set to 1, otherwise 0. Then Vx is divided by 2. //
+                        self.write_reg_vx(0xF, vx & 0x1);
+                        self.write_reg_vx(x, vx >> 1);
+                    }
+                    0x7 => {
+                        //  Set Vx = Vy - Vx, set VF = NOT borrow. //
+                        //  If Vy > Vx, then VF is set to 1, otherwise 0. Then Vx is subtracted from Vy, and the results stored in Vx. //
+                        let result: i8 = vy as i8 - vx as i8;
+                        if result < 0 {
+                            panic!("Unrecognized 0x8XY7 instruction {:#X} {:#X}. Expected positive u8 integer, got {:#X}:" , self.pc, current_instruction, result);
+                        } 
+                        self.write_reg_vx(x, result as u8);
+                        if result < 0 {
+                            self.write_reg_vx(0xF, 1);
+                        } else {
+                            self.write_reg_vx(0xF, 0);
+                        }
+                    }
+                    0xE => {
+                        //  Set Vx = Vx SHL 1. //
+                        //  If the most-significant bit of Vx is 1, then VF is set to 1, otherwise to 0. Then Vx is multiplied by 2. //
+                        self.write_reg_vx(0xF, (vx & (0x80)) >> 7);
+                        self.write_reg_vx(x, vx << 1);
+                    }
+                    _  => {
+                        panic!("Unrecognized 0x8XY* instruction {:#X} {:#X}", self.pc, current_instruction);
+                    }
                 }
+            }
+            0x9 => {
+                //  Skip next instruction if Vx != Vy. //
+                //  The values of Vx and Vy are compared, and if they are not equal, the program counter is increased by 2. //
+                let vx = self.read_reg_vx(x);
+                let vy = self.read_reg_vx(y);
+
+                if vx != vy {
+                    self.pc += 4;
+                } else {
+                    self.pc += 2;
+                }
+            }
+            0xA => {
+                //  Set I = nnn. //
+                //  The value of register I is set to nnn. //
+                self.i = nnn;
+                self.pc += 2;
+            }
+            0xB => {
+                //  Jump to location nnn + V0. //
+                //  The program counter is set to nnn plus the value of V0. //
+                let location: u16 = self.read_reg_vx(0) as u16 + nnn;
+                self.pc = location;
+            }
+            0xC => {
+                //  Set Vx = random byte AND kk. //
+                //  The interpreter generates a random number from 0 to 255, which is then ANDed with the value kk. The results are stored in Vx. See instruction 8xy2 for more information on AND. //
+                let mut range = rand::thread_rng();
+                let rand_num: u8 = range.gen_range(0..=255);
             }
             0xD => {
                 self.debug_draw_sprite(bus, x, y, 100);
