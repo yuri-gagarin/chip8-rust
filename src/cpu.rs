@@ -41,8 +41,8 @@ impl CPU {
     }
     // instructions //
     pub fn run_instruction(&mut self, bus: &mut Bus) {
-        let low = bus.ram_read_byte(self.pc) as u16;
-        let high = bus.ram_read_byte(self.pc + 1) as u16;
+        let high = bus.ram_read_byte(self.pc) as u16;
+        let low = bus.ram_read_byte(self.pc + 1) as u16;
         let current_instruction: u16 = (high << 8) | low;
         
         println!("Instruction - {:#X} - read: LO - {:#X}. HI - {:#X}", current_instruction, low, high);
@@ -158,8 +158,8 @@ impl CPU {
                     0x4 => {
                         //  Set Vx = Vx + Vy, set VF = carry. //
                         //  The values of Vx and Vy are added together. If the result is greater than 8 bits (i.e., > 255,) VF is set to 1, otherwise 0. Only the lowest 8 bits of the result are kept, and stored in Vx. //
-                        let res = vx + vy;
-                        self.write_reg_vx(x, res);
+                        let res = vx as u16 + vy as u16;
+                        self.write_reg_vx(x, res as u8);
                         if res > 0xFF {
                             self.write_reg_vx(0xF, 1);
                         }
@@ -167,10 +167,7 @@ impl CPU {
                     0x5 => {
                         //  Set Vx = Vx - Vy, set VF = NOT borrow. //
                         //  If Vx > Vy, then VF is set to 1, otherwise 0. Then Vy is subtracted from Vx, and the results stored in Vx. //
-                        let result: i8 = vx as i8 - vy as i8;
-                        if result < 0 {
-                            panic!("Unrecognized 0x8XY5 instruction {:#X} {:#X}. Expected positive u8 integer, got {:#X}:" , self.pc, current_instruction, result);
-                        }                        
+                        let result: i8 = vx as i8 - vy as i8;                    
                         self.write_reg_vx(x, result as u8);
                         if result < 0 {
                             self.write_reg_vx(0xF, 1);
@@ -188,9 +185,6 @@ impl CPU {
                         //  Set Vx = Vy - Vx, set VF = NOT borrow. //
                         //  If Vy > Vx, then VF is set to 1, otherwise 0. Then Vx is subtracted from Vy, and the results stored in Vx. //
                         let result: i8 = vy as i8 - vx as i8;
-                        if result < 0 {
-                            panic!("Unrecognized 0x8XY7 instruction {:#X} {:#X}. Expected positive u8 integer, got {:#X}:" , self.pc, current_instruction, result);
-                        } 
                         self.write_reg_vx(x, result as u8);
                         if result < 0 {
                             self.write_reg_vx(0xF, 1);
@@ -208,6 +202,7 @@ impl CPU {
                         panic!("Unrecognized 0x8XY* instruction {:#X} {:#X}", self.pc, current_instruction);
                     }
                 }
+                self.pc += 2;
             }
             0x9 => {
                 //  Skip next instruction if Vx != Vy. //
@@ -238,9 +233,34 @@ impl CPU {
                 //  The interpreter generates a random number from 0 to 255, which is then ANDed with the value kk. The results are stored in Vx. See instruction 8xy2 for more information on AND. //
                 let mut range = rand::thread_rng();
                 let rand_num: u8 = range.gen_range(0..=255);
+                self.write_reg_vx(x, rand_num & nn);
+                self.pc += 2;
             }
             0xD => {
-                self.debug_draw_sprite(bus, x, y, 100);
+                //  Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision. //
+                //  The interpreter reads n bytes from memory, starting at the address stored in I. //
+                //  These bytes are then displayed as sprites on screen at coordinates (Vx, Vy). Sprites are XORed onto the existing screen. If this causes any pixels to be erased, VF is set to 1, otherwise it is set to 0.
+                //  If the sprite is positioned so part of it is outside the coordinates of the display, it wraps around to the opposite side of the screen. See instruction 8xy3 for more information on XOR, and section 2.4, Display, for more information on the Chip-8 screen and sprites. //
+                let vx = self.read_reg_vx(x);
+                let vy = self.read_reg_vx(y);
+                self.debug_draw_sprite(bus, vx, vy, n);
+                self.pc += 2;
+            }
+            0xE => {
+                match nn {
+                    0x9E => {
+                        // Skip next instruction if key with the value of Vx is pressed.  //
+                        let key = self.read_reg_vx(x);
+                        if bus.is_key_pressed(key) {
+                            self.pc += 4;
+                        } else {
+                            self.pc += 2;
+                        }
+                    }
+                    _ => {
+
+                    }
+                }
             }
             _   => panic!("Unrecognized instruction at {:#X}:{:#X}", self.pc, current_instruction)
         }
