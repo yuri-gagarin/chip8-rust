@@ -257,8 +257,74 @@ impl CPU {
                             self.pc += 2;
                         }
                     }
+                    0xA1 => {
+                        //  Skip next instruction if key with the value of Vx is not pressed. //
+                        let key = self.read_reg_vx(x);
+                        if !bus.is_key_pressed(key) {
+                            self.pc += 4;
+                        } else {
+                            self.pc += 2;
+                        }
+                    }
                     _ => {
+                        panic!("Unrecognized 0xEX** instruction {:#X}:{:#X}". self.pc, current_instruction);
+                    }
+                }
+            }
+            0xF => {
+                match nn {
+                    0x07 => {
+                        //  Set Vx = delay timer value. //
+                        //  The value of DT is placed into Vx. //
+                        self.write_reg_vx(x, bus.get_delay_timer());
+                        self.pc += 2;
+                    }
+                    0x0A => {
+                        //  Wait for a key press, store the value of the key in Vx. //
+                        //  All execution stops until a key is pressed, then the value of that key is stored in Vx. //
+                        if let Some(val) = bus.get_key_pressed() {
+                            self.write_reg_vx(x, val);
+                            self.pc += 2;
+                        }
+                    }
+                    0x15 => {
+                        //  Set delay timer = Vx. //
+                        let vs = self.read_reg_vx(x);
+                        bus.set_daly_timer(value)
+                        self.pc += 2;
+                    }
+                    0x18 => {
+                        //  Set sound timer = Vx. //
+                        //  ST is set equal to the value of Vx. //
+                        //  work on sound timer //
 
+                        //  Sound: The Chip8 can only play the one sound which is a beep noise. 
+                        //  The sound is played whenever the sound timer is greater than 0. So every time I decrement the sound timer I then check its value to see if it is greater than 0, if so I play a beep sound. 
+                        //  This is a really very primitive way of emulating sound. Unfortunately this wont teach you much about real sound emulation which is widely regarded as being the most difficult part of emulation. 
+                        self.pc += 2;
+                    }
+                    0x1E => {
+                        //  Set I = I + Vx. //
+                        //  The values of I and Vx are added, and the results are stored in I. //
+                        let vx = self.read_reg_vx(x);
+                        self.i = self.i + vx as u16;
+                        self.pc += 2;
+                    }
+                    0x29 => {
+                        //  Set I = location of sprite for digit Vx. //
+                        //  The value of I is set to the location for the hexadecimal sprite corresponding to the value of Vx. //
+                        //  Multiply by 5, each sprite has 5 lines //
+                        self.i = self.read_reg_vx(x).into() * 5;
+                        self.pc += 2;
+                    }
+                    0x33 => {
+                        //  Store BCD representation of Vx in memory locations I, I+1, and I+2. //
+                        //  The interpreter takes the decimal value of Vx, and places the hundreds digit in memory at location in I, the tens digit at location I+1, and the ones digit at location I+2. //
+                        let vx = self.read_reg_vx(x);
+                        bus.ram_write_byte(self.i, vx / 100);            // hundreds //
+                        bus.ram_write_byte(self.i + 1, (vx % 100) / 10); // tens //
+                        bus.ram_write_byte(self.i + 2, vx % 10);         // ones //
+                        self.pc += 2;
                     }
                 }
             }

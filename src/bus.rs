@@ -41,7 +41,7 @@ impl Bus {
     pub fn is_key_pressed(&self, key_code: u8) -> bool {
         self.keyboard.is_key_pressed(key_code)
     }
-    pub fn set_daly_timer(&mut self, value: u8) {
+    pub fn set_delay_timer(&mut self, value: u8) {
         self.delay_timer_set_time = std::time::Instant::now();
         self.delay_timer = value;
     }
