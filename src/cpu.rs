@@ -38,6 +38,11 @@ impl CPU {
                 should_set_vf = true;
             }
         }
+        if should_set_vf {
+            self.write_reg_vx(0xF, 1);
+        } else {
+            self.write_reg_vx(0xF, 0);
+        }
     }
     // instructions //
     pub fn run_instruction(&mut self, bus: &mut Bus) {
@@ -54,8 +59,8 @@ impl CPU {
         let nnn: u16 = current_instruction & 0x0FFF;            // NNN address //
         let nn: u8 = (current_instruction & 0x0FF) as u8;       // NN 8 bit constant //
         let n: u8 = (current_instruction & 0x00F) as u8;        // N 4 bit constant // 
-        let x: u8 = (current_instruction & 0x0F00 >> 8) as u8;  //
-        let y: u8 = (current_instruction & 0x00F0 >> 4) as u8;  //
+        let x: u8 = (current_instruction & 0x0F00 >> 8) as u8;  // x 
+        let y: u8 = (current_instruction & 0x00F0 >> 4) as u8;  // y
         
         match (current_instruction & 0xF000) >> 12 {
             0x0 => {
@@ -145,14 +150,12 @@ impl CPU {
                     0x2 => {
                         // Set Vx = Vx AND Vy. //
                         // Performs a bitwise AND on the values of Vx and Vy, then stores the result in Vx. A bitwise AND compares the corresponding bits from two values, and if both bits are 1, then the same bit in the result is also 1. Otherwise, it is 0.
-                        let res = vx & vy;
-                        self.write_reg_vx(x, res);
+                        self.write_reg_vx(x, vx & vy);
                     }
                     0x3 => {
                         // Set Vx = Vx XOR Vy. //
                         // Performs a bitwise exclusive OR on the values of Vx and Vy, then stores the result in Vx. An exclusive OR compares the corrseponding bits from two values, and if the bits are not both the same, then the corresponding bit in the result is set to 1. Otherwise, it is 0. //
-                        let res = vx ^ vy;
-                        self.write_reg_vx(x, res);
+                        self.write_reg_vx(x, vx ^ vy);
 
                     }
                     0x4 => {
@@ -231,7 +234,7 @@ impl CPU {
             0xC => {
                 //  Set Vx = random byte AND kk. //
                 //  The interpreter generates a random number from 0 to 255, which is then ANDed with the value kk. The results are stored in Vx. See instruction 8xy2 for more information on AND. //
-                let mut range = rand::thread_rng();
+                let mut range = thread_rng();
                 let rand_num: u8 = range.gen_range(0..=255);
                 self.write_reg_vx(x, rand_num & nn);
                 self.pc += 2;
@@ -267,7 +270,7 @@ impl CPU {
                         }
                     }
                     _ => {
-                        panic!("Unrecognized 0xEX** instruction {:#X}:{:#X}". self.pc, current_instruction);
+                        panic!("Unrecognized 0xEX** instruction {:#X}:{:#X}", self.pc, current_instruction);
                     }
                 }
             }
@@ -290,7 +293,7 @@ impl CPU {
                     0x15 => {
                         //  Set delay timer = Vx. //
                         let vs = self.read_reg_vx(x);
-                        bus.set_daly_timer(value)
+                        bus.set_delay_timer(vs);
                         self.pc += 2;
                     }
                     0x18 => {
@@ -314,7 +317,7 @@ impl CPU {
                         //  Set I = location of sprite for digit Vx. //
                         //  The value of I is set to the location for the hexadecimal sprite corresponding to the value of Vx. //
                         //  Multiply by 5, each sprite has 5 lines //
-                        self.i = self.read_reg_vx(x).into() * 5;
+                        self.i = self.read_reg_vx(x) as u16 * 5;
                         self.pc += 2;
                     }
                     0x33 => {
@@ -326,11 +329,32 @@ impl CPU {
                         bus.ram_write_byte(self.i + 2, vx % 10);         // ones //
                         self.pc += 2;
                     }
+                    0x55 => {
+                        //  Store registers V0 through Vx in memory starting at location I. //
+                        //  The interpreter copies the values of registers V0 through Vx into memory, starting at the address in I. //
+                        for index in 0..x + 1 {
+                            let val = self.read_reg_vx(index);
+                            bus.ram_write_byte(self.i + index as u16, val);
+                        }
+                        self.i += x as u16 + 1;
+                        self.pc += 2;
+                    }
+                    0x65 => {
+                        //  Read registers V0 through Vx from memory starting at location I. //
+                        //  The interpreter reads values from memory starting at location I into registers V0 through Vx. //
+                        for index in 0..x + 1 {
+                            let value = bus.ram_read_byte(self.i + index as u16);
+                            self.write_reg_vx(index, value);
+
+                        }
+                        self.i += x as u16 + 1;
+                        self.pc += 2;
+                    }
+                    _ => panic!("Unrecognized 0xF instruction {:#x}:{:#x}", self.pc, current_instruction)
                 }
             }
             _   => panic!("Unrecognized instruction at {:#X}:{:#X}", self.pc, current_instruction)
         }
-
     }
 }
 
