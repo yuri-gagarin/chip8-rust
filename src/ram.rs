@@ -1,7 +1,7 @@
 use super::emulator::SPRITES;
 
 pub struct Ram {
-    memory: [u8; 4096],
+    memory: [u8; 4096], // 4096 bytes of Ram - Chip - 8
 }
 impl Ram {
     pub fn new() -> Ram {

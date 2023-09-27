@@ -21,14 +21,12 @@ impl Display {
         let mut x_coordinate = x as usize;
         let mut y_coordinate = y as usize;
         let mut b = byte;
-        let number: i16 = -10;
-
 
         for _ in 0..8 {
-            x_coordinate = WIDTH;
-            y_coordinate = HEIGHT;
+            x_coordinate %= WIDTH;
+            y_coordinate %= HEIGHT;
             let index = Display::get_index_from_coordinates(x_coordinate, y_coordinate);
-            let bit = (b & 0b1000_0000) >> 7; // why? 
+            let bit = (b & 0b1000_0000) >> 7;     // why? 
             let previous_val = self.screen[index];
             self.screen[index] ^= bit;            // bitwise or //
 
@@ -47,7 +45,7 @@ impl Display {
             *pixel = 0;
         }
     }
-    pub fn get_display_buffer(&mut self) -> &[u8] {
+    pub fn get_display_buffer(&self) -> &[u8] {
         &self.screen
     } 
 }

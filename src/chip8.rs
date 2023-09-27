@@ -28,5 +28,14 @@ impl Chip8 {
     }
     pub fn run_instruction(&mut self) {
         self.cpu.run_instruction(&mut self.bus);
+        // debugging //
+        // println!("CPU instruction state: {:?}", self.cpu);
+        // println!("BUS instruction state: {:?}", self.bus);
     }
+    pub fn get_display_buffer(&self) -> &[u8] {
+        self.bus.get_display_buffer()
+    }
+    pub fn set_key_pressed(&mut self, key: Option<u8>) {
+        self.bus.set_key_pressed(key);
+    } 
 }
